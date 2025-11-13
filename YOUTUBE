@@ -1,0 +1,1141 @@
+import 'package:flutter/material.dart';
+
+// --- Data Model for Videos and Shorts (to better manage content) ---
+class Content {
+  final String title;
+  final String channel;
+  final String views;
+  final String time;
+  final String thumbnailUrl;
+  final String avatarUrl;
+  final String duration;
+  final ContentType type;
+
+  const Content({
+    required this.title,
+    required this.channel,
+    required this.views,
+    required this.time,
+    required this.thumbnailUrl,
+    required this.avatarUrl,
+    required this.duration,
+    this.type = ContentType.video,
+  });
+}
+
+enum ContentType { video, short }
+
+// --- 1. Main Application & Theme ---
+class YoutubeCloneApp extends StatelessWidget {
+  const YoutubeCloneApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'YouTube Clone UI',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+        ),
+        brightness: Brightness.light,
+        useMaterial3: true,
+      ),
+      home: const MainScaffold(),
+    );
+  }
+}
+
+// --- 2. Main Structure and Navigation ---
+class MainScaffold extends StatefulWidget {
+  const MainScaffold({super.key});
+
+  @override
+  State<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends State<MainScaffold> {
+  int _selectedIndex = 0; // Represents the index in _screens
+
+  final List<Widget> _screens = <Widget>[
+    const HomeScreen(),
+    const ShortsScreen(),
+    const SubscriptionsScreen(),
+    const YouScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    if (index == 2) {
+      // Logic for the center '+' (Create) button
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (BuildContext context) => const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+                leading: Icon(Icons.video_call), title: Text('Upload a video')),
+            ListTile(
+                leading: Icon(Icons.short_text), title: Text('Create a Short')),
+            ListTile(leading: Icon(Icons.live_tv), title: Text('Go live')),
+          ],
+        ),
+      );
+    } else {
+      setState(() {
+        // Map BottomNavigationBar index to _screens index
+        if (index < 2) {
+          _selectedIndex = index; // 0 -> 0 (Home), 1 -> 1 (Shorts)
+        } else {
+          // 3 (Subscriptions) -> 2, 4 (You) -> 3
+          _selectedIndex = index - 1;
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Map _selectedIndex (for _screens) back to BottomNavigationBar index
+    int bottomNavCurrentIndex;
+    if (_selectedIndex == 0) {
+      bottomNavCurrentIndex = 0; // Home
+    } else if (_selectedIndex == 1) {
+      bottomNavCurrentIndex = 1; // Shorts
+    } else if (_selectedIndex == 2) {
+      bottomNavCurrentIndex = 3; // Subscriptions
+    } else {
+      bottomNavCurrentIndex = 4; // You
+    }
+
+    return Scaffold(
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: bottomNavCurrentIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey[700],
+        backgroundColor: Colors.white,
+        elevation: 5,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.video_library_outlined),
+              activeIcon: Icon(Icons.video_library),
+              label: 'Shorts'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle_outline, size: 36),
+              activeIcon: Icon(Icons.add_circle, size: 36),
+              label: ''), // This is the central '+' button
+          BottomNavigationBarItem(
+              icon: Icon(Icons.subscriptions_outlined),
+              activeIcon: Icon(Icons.subscriptions),
+              label: 'Subscriptions'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'You'),
+        ],
+      ),
+    );
+  }
+}
+
+// Placeholder for the actual Shorts screen
+class ShortsScreen extends StatelessWidget {
+  const ShortsScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+        child: Text('Shorts Screen',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)));
+  }
+}
+
+// Placeholder for the actual Subscriptions screen
+class SubscriptionsScreen extends StatelessWidget {
+  const SubscriptionsScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+        child: Text('Subscriptions Screen',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)));
+  }
+}
+
+// Placeholder for the actual You screen
+class YouScreen extends StatelessWidget {
+  const YouScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+        child: Text('You Screen',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)));
+  }
+}
+
+// --- 3. Search Screen (Based on Image 6) ---
+class SearchScreen extends StatelessWidget {
+  const SearchScreen({super.key});
+
+  final List<String> _recentSearches = const <String>[
+    'vamshi kurupu raw talks',
+    'trending songs',
+    'top news',
+    'bigg boss promo',
+    'yoga in daily life',
+    'the girl friend trailer',
+    'movie trailers',
+    'andhra king taluka songs',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Container(
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const TextField(
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: 'Search YouTube',
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+          ),
+        ),
+        actions: const <Widget>[
+          Padding(
+            padding: EdgeInsets.only(right: 8.0),
+            child: Icon(Icons.mic, color: Colors.black),
+          ),
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: _recentSearches.length,
+        itemBuilder: (BuildContext context, int index) {
+          return ListTile(
+            leading: const Icon(Icons.history, color: Colors.grey),
+            title: Text(_recentSearches[index]),
+            trailing: const Icon(Icons.arrow_upward, color: Colors.grey),
+            onTap: () {
+              // ignore: avoid_print
+              print('Searching for: ${_recentSearches[index]}');
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+// --- 4. Notifications Screen (Based on Image 4) ---
+class NotificationsScreen extends StatelessWidget {
+  const NotificationsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Notifications'),
+        actions: <Widget>[
+          IconButton(icon: const Icon(Icons.cast), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search), onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (BuildContext context) => const SearchScreen()));
+          }),
+          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
+        ],
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Icon(Icons.notifications_none, size: 100, color: Colors.grey),
+            const SizedBox(height: 20),
+            const Text(
+              'Your notifications live here',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Don't miss the latest videos and more\nfrom your favourite channels.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('Turn on Notifications'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- NEW Explore Screen ---
+class ExploreScreen extends StatelessWidget {
+  const ExploreScreen({super.key});
+
+  final List<Map<String, dynamic>> _exploreCategories = const <Map<String, dynamic>>[
+    {'name': 'Shopping', 'icon': Icons.shopping_bag_outlined},
+    {'name': 'Music', 'icon': Icons.music_note_outlined},
+    {'name': 'Films', 'icon': Icons.movie_outlined},
+    {'name': 'Hype', 'icon': Icons.star_border},
+    {'name': 'Live', 'icon': Icons.live_tv},
+    {'name': 'Gaming', 'icon': Icons.gamepad_outlined},
+    {'name': 'News', 'icon': Icons.article_outlined},
+    {'name': 'Sport', 'icon': Icons.sports_soccer_outlined},
+    {'name': 'Courses', 'icon': Icons.school_outlined},
+    {'name': 'Fashion & beauty', 'icon': Icons.checkroom_outlined},
+    {'name': 'Podcasts', 'icon': Icons.podcasts},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Explore',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: <Widget>[
+          IconButton(icon: const Icon(Icons.cast), onPressed: () {
+            // Cast Popup (Image 7) - Same as HomeAppBar
+              showModalBottomSheet<void>(
+                context: context,
+                builder: (BuildContext context) => Container(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      const Text('Select a device',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      ListTile(
+                        leading: const Icon(Icons.tv),
+                        title: const Text('Link with TV code'),
+                        onTap: () => Navigator.pop(context),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.info_outline),
+                        title: const Text('Learn more'),
+                        onTap: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+          }),
+          IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (BuildContext context) =>
+                      const NotificationsScreen()));
+          }),
+          IconButton(icon: const Icon(Icons.search), onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (BuildContext context) => const SearchScreen()));
+          }),
+        ],
+      ),
+      body: ListView.separated(
+        itemCount: _exploreCategories.length,
+        separatorBuilder: (BuildContext context, int index) =>
+            const Divider(height: 1),
+        itemBuilder: (BuildContext context, int index) {
+          final Map<String, dynamic> item = _exploreCategories[index];
+          return ListTile(
+            leading: Icon(item['icon'] as IconData, size: 26, color: Colors.black),
+            title: Text(item['name'] as String, style: const TextStyle(fontSize: 16)),
+            onTap: () {
+              // ignore: avoid_print
+              print('Navigating to explore category: ${item['name']}');
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+// --- Custom Widget for Home Screen AppBar ---
+class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const HomeAppBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Row(
+        children: <Widget>[
+          const Icon(Icons.play_circle_fill, color: Colors.red, size: 30),
+          const SizedBox(width: 4),
+          const Text(
+            'YouTube',
+            style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -1,
+                color: Colors.black),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        IconButton(
+            icon: const Icon(Icons.explore_outlined, color: Colors.black), // New Explore Icon
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (BuildContext context) => const ExploreScreen()));
+            }),
+        IconButton(
+            icon: const Icon(Icons.cast, color: Colors.black),
+            onPressed: () {
+              // Cast Popup (Image 7)
+              showModalBottomSheet<void>(
+                context: context,
+                builder: (BuildContext context) => Container(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      const Text('Select a device',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      ListTile(
+                        leading: const Icon(Icons.tv),
+                        title: const Text('Link with TV code'),
+                        onTap: () => Navigator.pop(context),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.info_outline),
+                        title: const Text('Learn more'),
+                        onTap: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+        IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.black),
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (BuildContext context) =>
+                      const NotificationsScreen()));
+            }),
+        IconButton(
+            icon: const Icon(Icons.search, color: Colors.black),
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (BuildContext context) => const SearchScreen()));
+            }),
+      ],
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+// --- Custom Widget for Filter Chips Row ---
+class FilterChipsRow extends StatelessWidget {
+  final List<String> filters;
+  final String selectedFilter;
+  final ValueChanged<String> onFilterSelected;
+
+  const FilterChipsRow({
+    super.key,
+    required this.filters,
+    required this.selectedFilter,
+    required this.onFilterSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8.0),
+      child: Row(
+        children: filters.map<Widget>((String chip) {
+          final bool isSelected = chip == selectedFilter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ChoiceChip(
+              label: Text(chip),
+              selected: isSelected,
+              onSelected: (bool selected) {
+                // Only change filter if selected, otherwise keep current selected or default to 'All' if unselecting
+                onFilterSelected(selected ? chip : 'All');
+              },
+              selectedColor: Colors.black,
+              backgroundColor: Colors.grey[200],
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : Colors.black,
+                fontSize: 14,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(
+                    color: isSelected
+                        ? Colors.black
+                        : (Colors.grey[300] ?? Colors.grey),
+                    width: 1),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// --- 5. Home Screen and Scrolling Feed (Images 1, 2, 5) ---
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final List<String> _filters = const <String>[
+    'All',
+    'Indian culture',
+    'Podcasts',
+    'comedies',
+    'Rashmika Mandanna',
+    'Telugu cinema',
+    'flutter app',
+    'Music',
+    'News',
+    'Bigg Boss'
+  ];
+  String _selectedFilter = 'All';
+
+  final List<Content> _videos = const <Content>[
+    Content(
+      title: 'How to fill with placeholder | Adobe Design...',
+      channel: 'The Wordy Tales',
+      views: '387K views',
+      time: '6 months ago',
+      thumbnailUrl:'https://i.ytimg.com/vi/BlgUZlwrrZM/maxresdefault.jpg' ,
+      avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
+      duration: '8:02',
+    ),
+    Content(
+      title: 'O Cheliya - Lyrical | Ram nithin|Thaman',
+      channel: 'Music Lounge Telugu',
+      views: '4.8K views',
+      time: '1 day ago',
+      thumbnailUrl: 'https://picsum.photos/seed/cheliya/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar9/100/100',
+      duration: '1:41',
+    ),
+    Content(
+      title: 'The Amazon Forest | The lake view..',
+      channel: 'Telugu360 Digital',
+      views: '2.5K views',
+      time: '2 days ago',
+      thumbnailUrl: 'https://picsum.photos/seed/anu/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar10/100/100',
+      duration: '8:49',
+    ),
+    Content(
+      title: 'Vamshi Kurapati Raw Talks - The Sea Miracles',
+      channel: 'Vamshi Kurapati',
+      views: '50K views',
+      time: '1 month ago',
+      thumbnailUrl: 'https://picsum.photos/seed/podcasta/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar3/100/100',
+      duration: '45:00',
+    ),
+    Content(
+      title: 'Top Hits 100 - Popular Music of 2024',
+      channel: 'Popular Music Channel',
+      views: '10M views',
+      time: '2 days ago',
+      thumbnailUrl: 'https://picsum.photos/seed/musica/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
+      duration: '5:30',
+    ),
+    Content(
+      title: 'The Girlfriend | Official Trailer | Exclusive Movie Preview',
+      channel: 'Movie Trailers Official',
+      views: '5M views',
+      time: '3 weeks ago',
+      thumbnailUrl: 'https://picsum.photos/seed/filma/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar2/100/100',
+      duration: '2:10',
+    ),
+    Content(
+      title: 'Maha Kumbamela Visuals | Glimpse of Indian Culture',
+      channel: 'Mahakatha - Meditation Mantras',
+      views: '4.6M views',
+      time: '2 years ago',
+      thumbnailUrl: 'https://picsum.photos/id/100/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar3/100/100',
+      duration: '29:51',
+    ),
+    Content(
+      title: 'Breaking News: Problems in Desert | TV9 Telugu Live',
+      channel: 'TV9 Telugu Live',
+      views: '22K views',
+      time: '1 day ago',
+      thumbnailUrl: 'https://picsum.photos/id/200/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar4/100/100',
+      duration: '17:31',
+    ),
+    // Added for 'comedies' filter
+    Content(
+      title: 'Best Comedy Scenes - Laugh Out Loud',
+      channel: 'Comedy Central',
+      views: '1.8M views',
+      time: '1 week ago',
+      thumbnailUrl: 'https://picsum.photos/seed/comedy1/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar6/100/100',
+      duration: '12:45',
+    ),
+    // Added for 'Rashmika Mandanna' filter
+    Content(
+      title: 'Rashmika Mandanna Interview - Latest Updates',
+      channel: 'Bollywood Now',
+      views: '700K views',
+      time: '4 days ago',
+      thumbnailUrl: 'https://picsum.photos/seed/rashmika1/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar7/100/100',
+      duration: '9:30',
+    ),
+    // Added for 'Bigg Boss' filter
+    Content(
+      title: 'Bigg Boss Promo - Week 5 Highlights',
+      channel: 'Reality TV Hub',
+      views: '1.1M views',
+      time: '2 days ago',
+      thumbnailUrl: 'https://picsum.photos/seed/biggboss1/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar8/100/100',
+      duration: '3:05',
+    ),
+    // Added for 'flutter app' filter
+    Content(
+      title: 'Building a Flutter App UI - Tutorial',
+      channel: 'Flutter Dev',
+      views: '500K views',
+      time: '1 month ago',
+      thumbnailUrl: 'https://picsum.photos/seed/flutterdev/600/338',
+      avatarUrl: 'https://picsum.photos/seed/avatar11/100/100',
+      duration: '25:15',
+    ),
+  ];
+
+  final List<Content> _shorts = const <Content>[
+    Content(
+      title: 'new year celebrations 😍',
+      channel: 'Fan Club',
+      views: '1.2M views',
+      time: '1 hour ago',
+      thumbnailUrl: 'https://picsum.photos/seed/short1/250/450',
+      avatarUrl: '', // Shorts don't always show avatar directly on card
+      duration: '', // Shorts don't typically show duration on card
+      type: ContentType.short,
+    ),
+    Content(
+      title: 'himalayas nature ',
+      channel: 'Beauty Hacks',
+      views: '300K views',
+      time: '3 hours ago',
+      thumbnailUrl: 'https://picsum.photos/seed/short2/250/450',
+      avatarUrl: '',
+      duration: '',
+      type: ContentType.short,
+    ),
+    Content(
+      title: 'dessert sand storms',
+      channel: 'Creative Kitchen',
+      views: '800K views',
+      time: '5 hours ago',
+      thumbnailUrl: 'https://picsum.photos/seed/short3/250/450',
+      avatarUrl: '',
+      duration: '',
+      type: ContentType.short,
+    ),
+   
+    Content(
+      title: 'grapes cultivating',
+      channel: 'Pet Lovers',
+      views: '2.1M views',
+      time: '1 day ago',
+      thumbnailUrl: 'https://picsum.photos/seed/short4/250/450',
+      avatarUrl: '',
+      duration: '',
+      type: ContentType.short,
+    ),
+  ];
+
+  void _onFilterSelected(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+  }
+
+  List<Content> _getFilteredVideos() {
+    if (_selectedFilter == 'All') {
+      return _videos;
+    }
+
+    final String lowerCaseFilter = _selectedFilter.toLowerCase();
+    final List<Content> matchedVideos = <Content>[];
+
+    // First pass: broad keyword matching
+    for (final Content content in _videos) {
+      if (content.title.toLowerCase().contains(lowerCaseFilter) ||
+          content.channel.toLowerCase().contains(lowerCaseFilter)) {
+        matchedVideos.add(content);
+      }
+    }
+
+    // Second pass: specific filter enhancements/overrides if initial matches are few or irrelevant
+    // Using a Set to avoid duplicates if specific additions overlap with general matches
+    final Set<Content> uniqueVideos = matchedVideos.toSet();
+
+    if (lowerCaseFilter.contains('music')) {
+      uniqueVideos.addAll(_videos.where((content) =>
+          content.title.toLowerCase().contains('music') ||
+          content.title.toLowerCase().contains('song') ||
+          content.title.toLowerCase().contains('audio') ||
+          content.channel.toLowerCase().contains('music') ||
+          content.channel.toLowerCase().contains('aditya') ||
+          content.channel.toLowerCase().contains('lounge')));
+    } else if (lowerCaseFilter.contains('podcast')) {
+      uniqueVideos.addAll(_videos.where((content) =>
+          content.title.toLowerCase().contains('podcast') ||
+          content.channel.toLowerCase().contains('raw talks') ||
+          content.channel.toLowerCase().contains('vamshi kurapati')));
+    } else if (lowerCaseFilter.contains('telugu cinema')) {
+      uniqueVideos.addAll(_videos.where((content) =>
+          content.title.toLowerCase().contains('telugu') ||
+          content.title.toLowerCase().contains('cinema') ||
+          content.title.toLowerCase().contains('trailer') ||
+          content.title.toLowerCase().contains('cheliya') ||
+          content.channel.toLowerCase().contains('telugu') ||
+          content.channel.toLowerCase().contains('movie trailers')));
+    } else if (lowerCaseFilter.contains('indian culture')) {
+      uniqueVideos.addAll(_videos.where((content) =>
+          content.title.toLowerCase().contains('kumbamela') ||
+          content.title.toLowerCase().contains('indian culture') ||
+          content.channel.toLowerCase().contains('mahakatha')));
+    } else if (lowerCaseFilter.contains('news')) {
+      uniqueVideos.addAll(_videos.where((content) =>
+          content.title.toLowerCase().contains('news') ||
+          content.channel.toLowerCase().contains('tv9')));
+    } else if (lowerCaseFilter.contains('bigg boss')) {
+       uniqueVideos.addAll(_videos.where((content) =>
+          content.title.toLowerCase().contains('bigg boss') ||
+          content.channel.toLowerCase().contains('reality tv hub')));
+    } else if (lowerCaseFilter.contains('rashmika mandanna')) {
+       uniqueVideos.addAll(_videos.where((content) =>
+          content.title.toLowerCase().contains('rashmika mandanna') ||
+          content.channel.toLowerCase().contains('bollywood now')));
+    } else if (lowerCaseFilter.contains('flutter app')) {
+       uniqueVideos.addAll(_videos.where((content) =>
+          content.title.toLowerCase().contains('flutter app') ||
+          content.channel.toLowerCase().contains('flutter dev')));
+    }
+
+    final List<Content> finalFilteredList = uniqueVideos.toList();
+
+    // Limit to a small number (e.g., 3-5) for specific filters if many matches
+    if (finalFilteredList.length > 5) {
+      return finalFilteredList.sublist(0, 5);
+    }
+
+    // Fallback: If no relevant videos are found for a specific filter, show a few generic ones.
+    if (finalFilteredList.isEmpty) {
+      return <Content>[
+        const Content(
+          title: 'How to fill with placeholder | Adobe Design...',
+          channel: 'The Wordy Tales',
+          views: '387K views',
+          time: '6 months ago',
+          thumbnailUrl:'https://i.ytimg.com/vi/BlgUZlwrrZM/maxresdefault.jpg' ,
+          avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
+          duration: '8:02',
+        ),
+        const Content(
+          title: 'The Amazon Forest | The lake view..',
+          channel: 'Telugu360 Digital',
+          views: '2.5K views',
+          time: '2 days ago',
+          thumbnailUrl: 'https://picsum.photos/seed/anu/600/338',
+          avatarUrl: 'https://picsum.photos/seed/avatar10/100/100',
+          duration: '8:49',
+        ),
+        const Content(
+          title: 'Maha Kumbamela Visuals | Glimpse of Indian Culture',
+          channel: 'Mahakatha - Meditation Mantras',
+          views: '4.6M views',
+          time: '2 years ago',
+          thumbnailUrl: 'https://picsum.photos/id/100/600/338',
+          avatarUrl: 'https://picsum.photos/seed/avatar3/100/100',
+          duration: '29:51',
+        ),
+      ];
+    }
+
+    return finalFilteredList;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Content> videosToDisplay = _getFilteredVideos();
+
+    return Scaffold(
+      appBar: const HomeAppBar(),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() {
+            // Placeholder for refreshing data (e.g., fetching latest videos)
+          });
+        },
+        child: CustomScrollView(
+          slivers: <Widget>[
+            SliverAppBar(
+              automaticallyImplyLeading: false,
+              pinned: true,
+              toolbarHeight: 56,
+              title: FilterChipsRow(
+                filters: _filters,
+                selectedFilter: _selectedFilter,
+                onFilterSelected: _onFilterSelected,
+              ),
+              backgroundColor: Colors.white,
+            ),
+            SliverList(
+              delegate: SliverChildListDelegate(
+                <Widget>[
+                  ...videosToDisplay
+                      .map<Widget>((Content video) => VideoCard(content: video))
+                      .toList(),
+                  // Shorts Section (Based on Image 2)
+                  const Divider(height: 20, thickness: 8, color: Colors.grey),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: <Widget>[
+                        const Icon(Icons.video_library,
+                            color: Colors.red,
+                            size: 24), // Using video_library for general video icon
+                        const SizedBox(width: 8),
+                        const Text('Shorts',
+                            style: TextStyle(
+                                fontSize: 22, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 300, // Fixed height for horizontal Shorts list
+                    child: ShortsList(shorts: _shorts),
+                  ),
+                  const Divider(height: 20, thickness: 8, color: Colors.grey),
+                  // Another Video
+                  VideoCard(
+                      content: Content(
+                    title: 'Long Drive Romance - Audio',
+                    channel: 'Aditya Music',
+                    views: '1.5M views',
+                    time: '3 weeks ago',
+                    thumbnailUrl: 'https://picsum.photos/seed/e/600/338',
+                    avatarUrl: 'https://picsum.photos/seed/avatar5/100/100',
+                    duration: '1:23:27',
+                  )),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- 6. Individual Video Card Widget ---
+class VideoCard extends StatelessWidget {
+  final Content content;
+  const VideoCard({super.key, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        GestureDetector(
+          onTap: () {
+            // ignore: avoid_print
+            print('Playing video: ${content.title}');
+          },
+          child: Stack(
+            children: <Widget>[
+              // 1. Thumbnail Image (Background Layer)
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Image.network(
+                  content.thumbnailUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (BuildContext context, Widget child,
+                      ImageChunkEvent? loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(color: Colors.grey[300]);
+                  },
+                  errorBuilder: (BuildContext context, Object error,
+                          StackTrace? stackTrace) =>
+                      Container(
+                          color: Colors.grey[400],
+                          child: const Center(
+                              child: Icon(Icons.broken_image,
+                                  color: Colors.white))),
+                ),
+              ),
+
+              // 2. Duration Overlay (Foreground Layer, Positioned)
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(204, 0, 0, 0),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    content.duration,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Details Row (Avatar, Title, Info, Options)
+        Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // Channel Avatar
+              CircleAvatar(
+                radius: 18,
+                backgroundImage: content.avatarUrl.isNotEmpty
+                    ? NetworkImage(content.avatarUrl)
+                    : null,
+                onBackgroundImageError: content.avatarUrl.isNotEmpty
+                    ? (Object exception, StackTrace? stackTrace) {
+                        // ignore: avoid_print
+                        print('Error loading avatar: $exception');
+                      }
+                    : null,
+                backgroundColor: Colors.grey[300], // Fallback background
+                child: content.avatarUrl.isEmpty
+                    ? Text(
+                        content.channel.isNotEmpty ? content.channel[0] : '?',
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 14))
+                    : null,
+              ),
+              const SizedBox(width: 8),
+
+              // Title and Info Column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      content.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: Colors.black, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${content.channel} • ${content.views} • ${content.time}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Options Icon
+              const Icon(Icons.more_vert, color: Colors.black),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// --- 7. Shorts List Widget ---
+class ShortsList extends StatelessWidget {
+  final List<Content> shorts;
+  const ShortsList({super.key, required this.shorts});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      itemCount: shorts.length,
+      itemBuilder: (BuildContext context, int index) {
+        return ShortsCard(content: shorts[index]);
+      },
+    );
+  }
+}
+
+// --- 8. Individual Shorts Card Widget ---
+class ShortsCard extends StatelessWidget {
+  final Content content;
+  const ShortsCard({super.key, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // ignore: avoid_print
+        print('Playing short: ${content.title}');
+      },
+      child: Container(
+        width: 160, // Fixed width for shorts card
+        margin: const EdgeInsets.only(right: 8.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.black, // Background if image fails
+        ),
+        clipBehavior: Clip.antiAlias, // Clip children to rounded corners
+        child: Stack(
+          children: <Widget>[
+            // Thumbnail Image
+            Positioned.fill(
+              child: Image.network(
+                content.thumbnailUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (BuildContext context, Widget child,
+                    ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(color: Colors.grey[300]);
+                },
+                errorBuilder: (BuildContext context, Object error,
+                        StackTrace? stackTrace) =>
+                    Container(
+                        color: Colors.grey[400],
+                        child: const Center(
+                            child:
+                                Icon(Icons.broken_image, color: Colors.white))),
+              ),
+            ),
+            // Gradient Overlay for text readability
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      Colors.transparent,
+                      const Color.fromARGB(51, 0, 0, 0),
+                      const Color.fromARGB(153, 0, 0, 0),
+                    ],
+                    stops: const <double>[0.0, 0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            // Title and Views
+            Positioned(
+              bottom: 8,
+              left: 8,
+              right: 8,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    content.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    content.views,
+                    style: const TextStyle(
+                        color: Color.fromARGB(204, 255, 255, 255),
+                        fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            // 'New' Tag
+            const Positioned(
+              top: 8,
+              left: 8,
+              child: Chip(
+                label: Text('New',
+                    style: TextStyle(color: Colors.white, fontSize: 10)),
+                backgroundColor: Colors.red,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: EdgeInsets.zero,
+                labelPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
